@@ -7,5 +7,5 @@ def takephoto():
     return_value, image = camera.read()
     cv2.imwrite('opencv'+str(date)+'.png', image)
     del(camera)
-    print("Done")
+    print("Photo Done")
 takephoto() 
