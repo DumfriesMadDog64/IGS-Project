@@ -1,3 +1,4 @@
+from tkinter.tix import IMAGE
 import numpy as np
 import cv2
 import os
@@ -9,23 +10,22 @@ def takephoto(max_array, min_array):
     date = datetime.now().strftime("%Y_%m_%d-%I-%M-%S_%p")
 
     #This creates the variable imagePath that says which directory the image is going to be stored in
-    imagePath = r'C:\Users\JonathonCrocker\IGS_Project\Auto_Photo\Photos'
+    imagePath = r'C:/Users/JonathonCrocker/IGS_Project/Auto_Photo/Photos'
 
     #This creates the variable camera, the fuction cv2.VideoCapture selects the main webcam, if we replace the 0 with a 1 it will use the second camera or webcam
     camera = cv2.VideoCapture(0)
     return_value, image = camera.read()
     
     #imwrite stores the photo to imagePath with the name 'opencv' + the date and time the photo was taken at
-    cv2.imwrite(os.path.join(imagePath, 'opencv'+str(date)+'.png'), image)
+    cv2.imwrite(os.path.join(imagePath, 'opencv' + str(date) + '.png'), image)
     
     #deletes the variable camera
     del(camera)
-    colourDetection(max_array, min_array, date)
+    colourDetection(max_array, min_array, date,imagePath)
 
-def colourDetection(max_array, min_array, date):
-
+def colourDetection(max_array, min_array, date,imagePath):
     #creates the file path where the required image is stored
-    filePath = r'C:/Users/JonathonCrocker/IGS_Project/Auto_Photo/Photos/' + "opencv" + str(date) + '.png'
+    filePath = r'C:/Users/JonathonCrocker/IGS_Project/Auto_Photo/Photos/' + 'opencv' + str(date) + '.png'
     
     #Creates a variable, image, which is the picture stored at that file path 
     image = cv2.imread(filePath)
@@ -46,10 +46,60 @@ def colourDetection(max_array, min_array, date):
         output = cv2.bitwise_and(image, image, mask = mask)
 
     #Shows the finished photo using the imshow function
-        cv2.imshow("images",np.hstack([image,output]))
-
+        cv2.imwrite(os.path.join(imagePath, 'opencvCD'+str(date)+'.png'), output)
     #The opened photo stays open until the user presses a button on their keyborad
-        cv2.waitKey(0)
 
+    colourChange(date,imagePath)
 
-takephoto([10,30,30],[90,140,150])
+def colourChange(date,imagePath):
+    
+    #Search for the correct file and load it as a variable called image
+    filePath = r'C:/Users/JonathonCrocker/IGS_Project/Auto_Photo/Photos/' + 'opencvCD' + str(date) + '.png'
+    image = cv2.imread(filePath)
+
+    #Sets the range of colours that will be changed
+    minColour = np.array([10,10,10])
+    maxColour = np.array([256,249,256])
+
+    #Searches the image for all colour in the range and replaces it with gray (RGB = [128,128,128])
+    mask = cv2.inRange(image,minColour,maxColour)
+    image[mask>0]=(128,128,128)
+
+    #Stores the image to the drive with the date as the file name and calls the next fuction in the sequence
+    cv2.imwrite(os.path.join(imagePath, 'opencvCC'+str(date)+'.png'), image)
+    blobDetection(date,imagePath)
+
+def blobDetection(date,imagePath):
+
+    #Finds the image from the colourChange and loads it as a variable
+    filePath = r'C:/Users/JonathonCrocker/IGS_Project/Auto_Photo/Photos/' + 'opencvCC' + str(date) + '.png'
+    image = cv2.imread(filePath)
+
+    #Sets the parameters of the SimpleBlobDectection function
+    params = cv2.SimpleBlobDetector_Params()
+    params.minThreshold = 0
+
+    params.maxThreshold = 100
+
+    params.filterByColor = 0
+
+    params.filterByCircularity = False
+    
+    params.filterByArea = True
+    params.minArea = 50
+    params.maxArea = 50000
+
+    params.filterByConvexity = False
+
+    params.filterByInertia = False
+
+    detector = cv2.SimpleBlobDetector_create(params)
+    keypoints = detector.detect(image)
+
+    im_with_keypoints = cv2.drawKeypoints(image, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DEFAULT)
+    cv2.imwrite(os.path.join(imagePath, 'opencvBD'+str(date)+'.png'), im_with_keypoints)
+    cv2.imshow("Keypoints", im_with_keypoints)
+    cv2.waitKey(0)
+    keypointCoor = cv2.KeyPoint_convert(keypoints)
+    print(keypointCoor)
+    print(len(keypointCoor))
