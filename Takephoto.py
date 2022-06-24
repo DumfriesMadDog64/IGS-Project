@@ -4,10 +4,11 @@ import cv2
 import os
 from pathlib import Path
 from datetime import datetime
+import matplotlib.pyplot as plt
 
 def takephoto(max_array, min_array):
     #This creates the variable date that records the exact date and time that the photo is taken
-    date = datetime.now().strftime("%Y_%m_%d-%I-%M-%S_%p")
+    date = str(datetime.now().strftime("%Y_%m_%d-%I-%M-%S_%p"))
 
     #This creates the variable imagePath that says which directory the image is going to be stored in
     imagePath = r'C:/Users/JonathonCrocker/IGS_Project/Auto_Photo/Photos'
@@ -17,7 +18,7 @@ def takephoto(max_array, min_array):
     return_value, image = camera.read()
     
     #imwrite stores the photo to imagePath with the name 'opencv' + the date and time the photo was taken at
-    cv2.imwrite(os.path.join(imagePath, 'opencv' + str(date) + '.png'), image)
+    cv2.imwrite(os.path.join(imagePath, 'opencv' + date + '.png'), image)
     
     #deletes the variable camera
     del(camera)
@@ -25,7 +26,7 @@ def takephoto(max_array, min_array):
 
 def colourDetection(max_array, min_array, date,imagePath):
     #creates the file path where the required image is stored
-    filePath = r'C:/Users/JonathonCrocker/IGS_Project/Auto_Photo/Photos/' + 'opencv' + str(date) + '.png'
+    filePath = r'C:/Users/JonathonCrocker/IGS_Project/Auto_Photo/Photos/' + 'opencv' + date + '.png'
     
     #Creates a variable, image, which is the picture stored at that file path 
     image = cv2.imread(filePath)
@@ -46,7 +47,7 @@ def colourDetection(max_array, min_array, date,imagePath):
         output = cv2.bitwise_and(image, image, mask = mask)
 
     #Shows the finished photo using the imshow function
-        cv2.imwrite(os.path.join(imagePath, 'opencvCD'+str(date)+'.png'), output)
+        cv2.imwrite(os.path.join(imagePath, 'opencvCD'+date+'.png'), output)
     #The opened photo stays open until the user presses a button on their keyborad
 
     colourChange(date,imagePath)
@@ -54,7 +55,7 @@ def colourDetection(max_array, min_array, date,imagePath):
 def colourChange(date,imagePath):
     
     #Search for the correct file and load it as a variable called image
-    filePath = r'C:/Users/JonathonCrocker/IGS_Project/Auto_Photo/Photos/' + 'opencvCD' + str(date) + '.png'
+    filePath = r'C:/Users/JonathonCrocker/IGS_Project/Auto_Photo/Photos/' + 'opencvCD' + date + '.png'
     image = cv2.imread(filePath)
 
     #Sets the range of colours that will be changed
@@ -66,40 +67,84 @@ def colourChange(date,imagePath):
     image[mask>0]=(128,128,128)
 
     #Stores the image to the drive with the date as the file name and calls the next fuction in the sequence
-    cv2.imwrite(os.path.join(imagePath, 'opencvCC'+str(date)+'.png'), image)
+    cv2.imwrite(os.path.join(imagePath, 'opencvCC'+date+'.png'), image)
     blobDetection(date,imagePath)
 
 def blobDetection(date,imagePath):
 
     #Finds the image from the colourChange and loads it as a variable
-    filePath = r'C:/Users/JonathonCrocker/IGS_Project/Auto_Photo/Photos/' + 'opencvCC' + str(date) + '.png'
+    filePath = r'C:/Users/JonathonCrocker/IGS_Project/Auto_Photo/Photos/' + 'opencvCC' + date + '.png'
     image = cv2.imread(filePath)
 
     #Sets the parameters of the SimpleBlobDectection function
     params = cv2.SimpleBlobDetector_Params()
     params.minThreshold = 0
-
     params.maxThreshold = 100
-
     params.filterByColor = 0
-
     params.filterByCircularity = False
-    
     params.filterByArea = True
-    params.minArea = 50
-    params.maxArea = 50000
-
+    params.minArea = 350
+    params.maxArea = 5000    
     params.filterByConvexity = False
-
     params.filterByInertia = False
 
     detector = cv2.SimpleBlobDetector_create(params)
-    keypoints = detector.detect(image)
+    keyPoints = detector.detect(image)
 
-    im_with_keypoints = cv2.drawKeypoints(image, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DEFAULT)
-    cv2.imwrite(os.path.join(imagePath, 'opencvBD'+str(date)+'.png'), im_with_keypoints)
+    loopCounter = 0
+    xCoords = []
+    yCoords = []
+    for i in keyPoints:
+         xCoords.append(keyPoints[loopCounter].pt[0])
+         yCoords.append(keyPoints[loopCounter].pt[1])
+         loopCounter = loopCounter + 1
+
+    im_with_keypoints = cv2.drawKeypoints(image, keyPoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DEFAULT)
+    cv2.imwrite(os.path.join(imagePath, 'opencvBD'+date+'.png'), im_with_keypoints)
     cv2.imshow("Keypoints", im_with_keypoints)
     cv2.waitKey(0)
-    keypointCoor = cv2.KeyPoint_convert(keypoints)
-    print(keypointCoor)
-    print(len(keypointCoor))
+
+    #convertDataToCoords(xCoords, yCoords)
+    gridCreater(xCoords,yCoords)
+
+
+def gridCreater(xCoords, yCoords):
+    X = np.array(xCoords)
+    Y = np.array(yCoords)
+    # Plotting point using scatter method
+    plt.scatter(X,Y)
+    plt.gca().invert_yaxis()
+    plt.show()
+
+# Need to take all of the first numbers in each entry, and add them to a list, then same for second number in each entry 
+def convertDataToCoords(xCoords, yCoords):
+    xSorted = []
+    ySorted = []
+ 
+    for y in yCoords:
+        print(y)
+        if y >= 0 and y <= 80:
+            ySorted.append(40)
+        elif y > 80 and y <= 160:
+            ySorted.append(120)
+        elif y > 160 and y <= 240:
+            ySorted.append(200)
+        elif y > 240 and y <= 320:
+            ySorted.append(280)
+        else: 
+            ySorted.append(360)
+        print(y)
+        print("==========")
+
+    for x in xCoords:
+        if x >= 0 and x <= 87.5:
+            xSorted.append(43.75)
+        elif x > 87.5 and y <= 175:
+            xSorted.append(131.25)
+        elif x > 175 and y <= 262.5:
+            xSorted.append(218.75)
+        elif x > 262.5 and y <= 350:
+            xSorted.append(306.25)
+        else: 
+            xSorted.append(656.25)
+    gridCreater(xSorted, ySorted)
