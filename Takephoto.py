@@ -24,16 +24,16 @@ def takephoto(max_array, min_array):
     del(camera)
     colourDetection(max_array, min_array, date,imagePath)
 
-def colourDetection(max_array, min_array, date,imagePath):
+def colourDetection(max_array, min_array,date,imagePath):
     #creates the file path where the required image is stored
-    filePath = r'C:/Users/JonathonCrocker/IGS_Project/Auto_Photo/Photos/' + 'opencv' + date + '.png'
-    
+    filePath = r'C:\Users\JonathonCrocker\downloads/MicrosoftTeams-image (1).png' 
     #Creates a variable, image, which is the picture stored at that file path 
     image = cv2.imread(filePath)
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
     #sets the upper and lower RGB values that will be searched for in the fuction, they need to be flipped as opencv reads RGB values as BGR 
     boundaries = [
-        (np.flip(max_array),np.flip(min_array))
+        ((max_array),(min_array))
     ]
 
     for (lower,upper) in boundaries:
@@ -41,14 +41,17 @@ def colourDetection(max_array, min_array, date,imagePath):
         upper = np.array(upper, dtype = "uint8")
 
     #Mask is a variable that is the image where, using the inRange function, has had the colour outside the function replaced with black
-        mask = cv2.inRange(image,lower,upper)
+        mask = cv2.inRange(hsv,lower,upper)
 
     #Creates the output, two images side by side, the original picture plus the processed one
         output = cv2.bitwise_and(image, image, mask = mask)
 
     #Shows the finished photo using the imshow function
-        cv2.imwrite(os.path.join(imagePath, 'opencvCD'+date+'.png'), output)
+        cv2.imshow("images",np.hstack([output]))
+
     #The opened photo stays open until the user presses a button on their keyborad
+        cv2.waitKey(0)
+        cv2.imwrite(os.path.join(imagePath, 'opencvCD'+str(date)+'.png'), output)
 
     colourChange(date,imagePath)
 
@@ -64,7 +67,7 @@ def colourChange(date,imagePath):
 
     #Searches the image for all colour in the range and replaces it with gray (RGB = [128,128,128])
     mask = cv2.inRange(image,minColour,maxColour)
-    image[mask>0]=(128,128,128)
+    image[mask>0]=(0,128,0)
 
     #Stores the image to the drive with the date as the file name and calls the next fuction in the sequence
     cv2.imwrite(os.path.join(imagePath, 'opencvCC'+date+'.png'), image)
@@ -83,7 +86,7 @@ def blobDetection(date,imagePath):
     params.filterByColor = 0
     params.filterByCircularity = False
     params.filterByArea = True
-    params.minArea = 350
+    params.minArea = 50
     params.maxArea = 5000    
     params.filterByConvexity = False
     params.filterByInertia = False
@@ -99,7 +102,9 @@ def blobDetection(date,imagePath):
          yCoords.append(keyPoints[loopCounter].pt[1])
          loopCounter = loopCounter + 1
 
-    im_with_keypoints = cv2.drawKeypoints(image, keyPoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DEFAULT)
+    print(len(xCoords))
+
+    im_with_keypoints = cv2.drawKeypoints(image, keyPoints, np.array([]), (255,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
     cv2.imwrite(os.path.join(imagePath, 'opencvBD'+date+'.png'), im_with_keypoints)
     cv2.imshow("Keypoints", im_with_keypoints)
     cv2.waitKey(0)
@@ -133,8 +138,6 @@ def convertDataToCoords(xCoords, yCoords):
             ySorted.append(280)
         else: 
             ySorted.append(360)
-        print(y)
-        print("==========")
 
     for x in xCoords:
         if x >= 0 and x <= 87.5:
@@ -148,3 +151,6 @@ def convertDataToCoords(xCoords, yCoords):
         else: 
             xSorted.append(656.25)
     gridCreater(xSorted, ySorted)
+
+
+takephoto([40,40,40],[70,255,255])
