@@ -47,10 +47,10 @@ def colourDetection(max_array, min_array,date,imagePath):
         output = cv2.bitwise_and(image, image, mask = mask)
 
     #Shows the finished photo using the imshow function
-        cv2.imshow("images",np.hstack([output]))
+        #cv2.imshow("images",np.hstack([output]))
+        #cv2.waitKey(0)
 
     #The opened photo stays open until the user presses a button on their keyborad
-        cv2.waitKey(0)
         cv2.imwrite(os.path.join(imagePath, 'opencvCD'+str(date)+'.png'), output)
 
     colourChange(date,imagePath)
@@ -106,12 +106,11 @@ def blobDetection(date,imagePath):
 
     im_with_keypoints = cv2.drawKeypoints(image, keyPoints, np.array([]), (255,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
     cv2.imwrite(os.path.join(imagePath, 'opencvBD'+date+'.png'), im_with_keypoints)
-    cv2.imshow("Keypoints", im_with_keypoints)
-    cv2.waitKey(0)
+    #cv2.imshow("Keypoints", im_with_keypoints)
+    #cv2.waitKey(0)
 
     #convertDataToCoords(xCoords, yCoords)
-    gridCreater(xCoords,yCoords)
-
+    convertDataToCoords(xCoords,yCoords)
 
 def gridCreater(xCoords, yCoords):
     X = np.array(xCoords)
@@ -127,29 +126,65 @@ def convertDataToCoords(xCoords, yCoords):
     ySorted = []
  
     for y in yCoords:
-        print(y)
-        if y >= 0 and y <= 80:
-            ySorted.append(40)
-        elif y > 80 and y <= 160:
-            ySorted.append(120)
-        elif y > 160 and y <= 240:
-            ySorted.append(200)
-        elif y > 240 and y <= 320:
-            ySorted.append(280)
-        else: 
-            ySorted.append(360)
+        if y >= 0 and y <= 175:
+            ySorted.append(150)
+        elif y > 175 and y <= 275:
+            ySorted.append(230)
+        elif y > 275 and y <= 350:
+            ySorted.append(310)
+        elif y > 350 and y <= 450:
+            ySorted.append(400)
+        elif y > 450 and y <= 525:
+            ySorted.append(480)
+        elif y > 525  and y <= 600:
+            ySorted.append(575)
+        elif y > 600 and y <= 700:
+            ySorted.append(650)
+        elif y > 700 and y <= 775:
+            ySorted.append(732.5)
+        elif y > 775 and y <= 860:
+            ySorted.append(830)
+        elif y > 860 and y <= 950:
+            ySorted.append(900)
+        elif y > 950 and y <= 1050:
+            ySorted.append(1000)
+        elif y > 1050 and y <= 1150:
+            ySorted.append(1090)
+        elif y > 1150 and y <= 1200:
+            ySorted.append(1175)
+        elif y > 1200 and y <= 1300:
+            ySorted.append(1270)
+        elif y > 1300 and y <= 1400:
+            ySorted.append(1350)
+        elif y > 1400 and y <= 1500:
+            ySorted.append(1450)
+        elif y > 1500 and y <= 1600:
+            ySorted.append(1550)
+        elif y > 1600 and y <= 1700:
+            ySorted.append(1640)
+        elif y > 1700 and y <= 1750:
+            ySorted.append(1725)
+        else:
+            ySorted.append(1800)
 
+ 
     for x in xCoords:
-        if x >= 0 and x <= 87.5:
-            xSorted.append(43.75)
-        elif x > 87.5 and y <= 175:
-            xSorted.append(131.25)
-        elif x > 175 and y <= 262.5:
-            xSorted.append(218.75)
-        elif x > 262.5 and y <= 350:
-            xSorted.append(306.25)
+        if x >= 0 and x <= 150:
+            xSorted.append(130)
+        elif x > 150 and x <= 250:
+            xSorted.append(230)
+        elif x > 250 and x <= 350:
+            xSorted.append(330)
+        elif x > 350 and x <= 450:
+            xSorted.append(430)
+        elif x > 450 and x <= 550:
+            xSorted.append(530)
+        elif x > 550 and x <= 650:
+            xSorted.append(630)
+        elif x > 650 and x <= 750:
+            xSorted.append(730)
         else: 
-            xSorted.append(656.25)
+            xSorted.append(830)   
     gridCreater(xSorted, ySorted)
 
 
