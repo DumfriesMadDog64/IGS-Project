@@ -1,13 +1,9 @@
-from asyncore import loop
-from tkinter.tix import IMAGE
-from turtle import setx
 import numpy as np
 import cv2
 import os
 from pathlib import Path
 from datetime import datetime
 import matplotlib.pyplot as plt
-
 
 def takephoto(max_array, min_array):
 
@@ -24,23 +20,20 @@ def takephoto(max_array, min_array):
         return_value, image = camera.read()
 
         #Saves image to imagePath then deletes the variable camera then prints "Photo done"
-        cv2.imwrite(os.path.join(imagePath, 'opencv'+str(date)+'.png'), image)
+        #cv2.imwrite(os.path.join(imagePath, 'opencv'+str(date)+'.png'), image)
         del(camera)
-        print("Photo Done")
-
+        
         #Calls the next function, colourDetection, passing the variables through to that function
-        colourDetection(max_array, min_array, date)
+        colourDetection(max_array, min_array, date, image)
+        print("Photo Done")
     except:
-        #If the code fails to take or store the photo then it will print "--Failure to take photo" to the command line
+        #If the code fails to take or store the photo then it will print "--Failure to take photo--" to the command line
         print("--Failure to take photo--")
     
-def colourDetection(max_array, min_array,date):
-    #Creates two variables, the first one,'imagePath' is where to read the photo from, and the second one, 'filePath' is where to store the photo to
-    #Curent imagePath is not where image will be loaded from, test image is currently loading
-    imagePath = r'C:/Users/JonathonCrocker/IGS_Project/Auto_Photo/Colour Detection Photos'
+def colourDetection(max_array, min_array,date,image):
+    #Current filePath only there for testing, later will use image from takePhoto
     filePath = r'C:/Users/JonathonCrocker/IGS_Project/Auto_Photo/Test Germination Tray.png' 
     
-
     #Sets the upper and lower bondaries for the colour detection 
     boundaries = [
         ((max_array),(min_array))
@@ -52,7 +45,8 @@ def colourDetection(max_array, min_array,date):
 
     #Error catching portion of function, will try to perform colour detection, if it fails it will print "Failure to perform colour detection"
     try:
-        #Read the image from the filePath and loads it as a variable, then replaces the colour in the picture from RGB to HSV
+        #Changes the colour from the image from RGB to HSV for better colour detection
+        #Currently reads a test image from the drive, in future this will be the image passed from takePhoto
         image = cv2.imread(filePath)
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
@@ -60,47 +54,42 @@ def colourDetection(max_array, min_array,date):
         mask = cv2.inRange(hsv,lower,upper)
         output = cv2.bitwise_and(image, image, mask = mask)
 
-        #Shows the output and saves it to the imagePath
-        #cv2.imshow("images",np.hstack([output]))
+        #Shows the output (only necesary for testing)
+        #cv2.imshow("images",np.hstack([image,output]))
         #cv2.waitKey(0)
-        cv2.imwrite(os.path.join(imagePath, 'opencvCD'+date+'.png'), output)
         
-        #Calls the next function passing the variable 'date' through
-        print("Colour detection done")
-        blobDetection(date)
+        #Calls the next function passing the variable 'date' and 'image' through
+        blobDetection(date,image,output)
+        print("Colour detection done")       
     except:
         print("--Failure to perform colour detection--")
 
-def blobDetection(date):
+def blobDetection(date,image,output):
 
     #We use simpleBlobDetection from opencv to find the green plants in the photo
-    #Creates two variables, the first one,'imagePath' is where to store the blobDetection photos to, the second one,'filePath' is where to read the photos from
-     imagePath = r'C:/Users/JonathonCrocker/IGS_Project/Auto_Photo/Blob Detection Photos'
-     filePath = r'C:/Users/JonathonCrocker/IGS_Project/Auto_Photo/Colour Detection Photos/' + 'opencvCD' + date + '.png'
+    #Creates a new variable,'imagePath' which is where to store the blobDetection photos to for future use
+    imagePath = r'C:/Users/JonathonCrocker/IGS_Project/Auto_Photo/Blob Detection Photos'
 
-     #Sets the parameters of the SimpleBlobDectection function
-     params = cv2.SimpleBlobDetector_Params()
+    #Sets the parameters of the SimpleBlobDectection function
+    params = cv2.SimpleBlobDetector_Params()
      
-     params.minThreshold = 0
-     params.maxThreshold = 100
-     params.filterByColor = 0
-     params.filterByCircularity = False
-     params.filterByArea = True
-     params.minArea = 50
-     params.maxArea = 5000    
-     params.filterByConvexity = False
-     params.filterByInertia = False
+    params.minThreshold = 0
+    params.maxThreshold = 100
+    params.filterByColor = 0
+    params.filterByCircularity = False
+    params.filterByArea = True
+    params.minArea = 50
+    params.maxArea = 5000    
+    params.filterByConvexity = False
+    params.filterByInertia = False
 
     #Error catching portion of function, it will try to perfrom the blob detection, if it fails, it will print an error to the command line
-     try:
-        #Reads the photo from the filePath and stores it as a variable called image
-        image = cv2.imread(filePath)
-
+    try:
         #Uses the parameters from above to create a detector then applies that to the image to find the keypoints, the centre of each of the detected blobs
         detector = cv2.SimpleBlobDetector_create(params)
-        keyPoints = detector.detect(image)
+        keyPoints = detector.detect(output)
 
-        #Creates to lists, xCoords and yCoords, the x and y coordinates of the keypoints
+        #Creates two lists, xCoords and yCoords, the x and y coordinates of the keypoints
         xCoords = []
         yCoords = []
 
@@ -111,20 +100,59 @@ def blobDetection(date):
             yCoords.append(keyPoints[loopCounter].pt[1])
             loopCounter = loopCounter + 1
 
-        #Creates a new image called im_with_keypoints which is the original image with the keypoints superimposed on top of it and then saves this image to the imagePath
-        im_with_keypoints = cv2.drawKeypoints(image, keyPoints, np.array([]), (255,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-        cv2.imwrite(os.path.join(imagePath, 'opencvBD'+date+'.png'), im_with_keypoints)
-        
-        #Displays im_with_keypoints in a new window
-        #cv2.imshow("Keypoints", im_with_keypoints)
-        #cv2.waitKey(0)
 
         #calls the next funciton, convertDataToCoords, passing xCoords and yCoords to it
+        #convertDataToCoords(xCoords, yCoords)
+        X = list(xCoords)
+        Y = list(yCoords)
+    
+        XYCoords = []
+        loopCounter = 0
+        for i in xCoords:
+            XYCoords.append((X[loopCounter],Y[loopCounter]))
+            loopCounter = loopCounter + 1
+        XYTotal = fuse(XYCoords,50)
+        print(len(XYTotal))
+        
+        #Creates a new image called im_with_keypoints which is the original image with the keypoints superimposed on top of it and then saves this image to the imagePath
+        im_with_keypoints = cv2.drawKeypoints(output, keyPoints, np.array([]), (255,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+        finalImage = np.hstack([im_with_keypoints,image])
+        cv2.imwrite(os.path.join(imagePath, 'opencvBD' + date + '.png'), finalImage)
+        
+        #Displays im_with_keypoints in a new window
+        cv2.imshow("Keypoints", finalImage)
+        cv2.waitKey(0)
+
+
+        gridCreater(XYTotal)
         print("Blob detection done")
-        convertDataToCoords(xCoords, yCoords)
-     except:
+    except:
         #If the blobDetection fails for some reason, the message "--Failure to perform blob detection--" will be printed to the command line
         print("--Failure to perform blob detection--")
+
+def dist2(p1, p2):
+    return (p1[0]-p2[0])**2 + (p1[1]-p2[1])**2
+
+def fuse(points, d):
+    ret = []
+    d2 = d * d
+    n = len(points)
+    taken = [False] * n
+    for i in range(n):
+        if not taken[i]:
+            count = 1
+            point = [points[i][0], points[i][1]]
+            taken[i] = True
+            for j in range(i+1, n):
+                if dist2(points[i], points[j]) < d2:
+                    point[0] += points[j][0]
+                    point[1] += points[j][1]
+                    count+=1
+                    taken[j] = True
+            point[0] /= count
+            point[1] /= count
+            ret.append((point[0], point[1]))
+    return ret
 
 def convertDataToCoords(xCoords, yCoords):
     xSorted = []
@@ -202,8 +230,8 @@ def convertDataToCoords(xCoords, yCoords):
         loopCounter = loopCounter + 1
     XYTotal = list(dict.fromkeys(XYTotal))
     
-    print("Imaging Done")
     print("Number of succesfull plugs =", len(XYTotal))
+    print("Imaging Done")
 
     gridCreater(XYTotal)
 
@@ -214,4 +242,3 @@ def gridCreater(XYTotal):
     plt.show()
     
 takephoto([40,40,40],[70,255,255])
-
